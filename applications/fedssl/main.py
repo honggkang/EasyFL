@@ -1,5 +1,8 @@
 import argparse
 
+import sys ######### 0205 rev
+sys.path.append('/home/hong/EasyFL-orig/EasyFL') ######### 0205 rev
+
 import easyfl
 from client import FedSSLClient
 from dataset import get_semi_supervised_dataset
@@ -24,9 +27,9 @@ def run():
     parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--local_epoch', default=5, type=int)
     parser.add_argument('--rounds', default=100, type=int)
-    parser.add_argument('--num_of_clients', default=5, type=int)
-    parser.add_argument('--clients_per_round', default=5, type=int)
-    parser.add_argument('--class_per_client', default=2, type=int,
+    parser.add_argument('--num_of_clients', default=10, type=int) #####
+    parser.add_argument('--clients_per_round', default=10, type=int) ######
+    parser.add_argument('--class_per_client', default=4, type=int,
                         help='for non-IID setting, number of classes each client, based on CIFAR10')
     parser.add_argument('--optimizer_type', default='SGD', type=str, help='optimizer type')
     parser.add_argument('--lr', default=0.032, type=float)
@@ -53,8 +56,11 @@ def run():
     parser.add_argument('--semi_supervised', action='store_true', help='whether to train with semi-supervised data')
     parser.add_argument('--label_ratio', default=0.01, type=float, help='percentage of labeled data')
 
-    parser.add_argument('--gpu', default=0, type=int)
+    parser.add_argument('--gpu', default=1, type=int)
+    parser.add_argument('--gpu_id', default=7, type=int) ###### 0205 rev
     parser.add_argument('--run_count', default=0, type=int)
+    parser.add_argument('--seed', type=int, default=42) ###### 0205 rev
+
 
     args = parser.parse_args()
     print("arguments: ", args)
@@ -134,7 +140,8 @@ def run():
 
             "momentum_update": momentum_update,
         },
-        'resource_heterogeneous': {"grouping_strategy": ""}
+        'resource_heterogeneous': {"grouping_strategy": ""},
+        'seed': args.seed ####### 0205 rev
     }
 
     if args.gpu > 1:
@@ -151,6 +158,7 @@ def run():
         config.update(distribute_config)
     else:
         config["gpu"] = args.gpu
+        config["gpu_id"] = args.gpu_id ####### 0205 rev
 
     if args.semi_supervised:
         train_data, test_data, _ = get_semi_supervised_dataset(args.dataset,

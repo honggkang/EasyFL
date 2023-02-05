@@ -91,7 +91,8 @@ class Coordinator(object):
         if self.conf.gpu == 0:
             self.conf.device = "cpu"
         elif self.conf.gpu == 1:
-            self.conf.device = "cuda"
+            # self.conf.device = "cuda"
+            self.conf.device = conf['gpu_id'] #### 0205 rev
         else:
             self.conf.device = get_device(self.conf.gpu, self.conf.distributed.world_size,
                                           self.conf.distributed.local_rank)
