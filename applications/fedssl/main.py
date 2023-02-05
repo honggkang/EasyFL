@@ -10,11 +10,18 @@ from easyfl.datasets.data import CIFAR100
 from easyfl.distributed import slurm
 from model import get_model, BYOLNoEMA, BYOL, BYOLNoSG, BYOLNoEMA_NoSG
 from server import FedSSLServer
+import wandb
 
+'''
+EasyFL-orig
+original code with minor revision (gpu-id & wandb)
+'''
 
 def run():
     parser = argparse.ArgumentParser(description='FedSSL')
-    parser.add_argument("--task_id", type=str, default="")
+    parser.add_argument("--task_id", type=str, default="fedema_single")
+    parser.add_argument("--wandb_name", type=str, default="fedema_single") ########
+    parser.add_argument("--wandb", type=bool, default=True) ########
     parser.add_argument("--dataset", type=str, default='cifar10', help='options: cifar10, cifar100')
     parser.add_argument("--data_partition", type=str, default='class', help='options: class, iid, dir')
     parser.add_argument("--dir_alpha", type=float, default=0.1, help='alpha for dirichlet sampling')
@@ -25,7 +32,7 @@ def run():
                         help='network of predictor, options: 1_layer, 2_layer')
 
     parser.add_argument('--batch_size', default=128, type=int)
-    parser.add_argument('--local_epoch', default=5, type=int)
+    parser.add_argument('--local_epoch', default=5, type=int) ########
     parser.add_argument('--rounds', default=100, type=int)
     parser.add_argument('--num_of_clients', default=10, type=int) #####
     parser.add_argument('--clients_per_round', default=10, type=int) ######
@@ -37,12 +44,12 @@ def run():
     parser.add_argument('--random_selection', action='store_true', help='whether randomly select clients')
 
     parser.add_argument('--aggregate_encoder', default='online', type=str, help='options: online, target')
-    parser.add_argument('--update_encoder', default='online', type=str, help='options: online, target, both, none')
-    parser.add_argument('--update_predictor', default='global', type=str, help='options: global, local, dapu')
+    parser.add_argument('--update_encoder', default='dynamic_ema_online', type=str, help='options: online, target, both, none, dynamic_ema_online')
+    parser.add_argument('--update_predictor', default='dynamic_dapu', type=str, help='options: global, local, dapu, dynamic_dapu')
     parser.add_argument('--dapu_threshold', default=0.4, type=float, help='DAPU threshold value')
-    parser.add_argument('--weight_scaler', default=1.0, type=float, help='weight scaler for different class per client')
+    parser.add_argument('--weight_scaler', default=1.0, type=float, help='weight scaler for different class per client') # lambda
     parser.add_argument('--auto_scaler', default='y', type=str, help='use value to compute auto scaler')
-    parser.add_argument('--auto_scaler_target', default=0.8, type=float,
+    parser.add_argument('--auto_scaler_target', default=0.7, type=float,
                         help='target weight for the first time scaling')
     parser.add_argument('--encoder_weight', type=float, default=0,
                         help='for ema encoder update, apply on local encoder')
@@ -57,7 +64,7 @@ def run():
     parser.add_argument('--label_ratio', default=0.01, type=float, help='percentage of labeled data')
 
     parser.add_argument('--gpu', default=1, type=int)
-    parser.add_argument('--gpu_id', default=7, type=int) ###### 0205 rev
+    parser.add_argument('--gpu_id', default=6, type=int) ###### 0205 rev
     parser.add_argument('--run_count', default=0, type=int)
     parser.add_argument('--seed', type=int, default=42) ###### 0205 rev
 
@@ -141,7 +148,8 @@ def run():
             "momentum_update": momentum_update,
         },
         'resource_heterogeneous': {"grouping_strategy": ""},
-        'seed': args.seed ####### 0205 rev
+        'seed': args.seed, ####### 0205 rev
+        'wandb': args.wandb ####### 0205 rev
     }
 
     if args.gpu > 1:
@@ -168,6 +176,10 @@ def run():
                                                                args.label_ratio)
         easyfl.register_dataset(train_data, test_data)
 
+    if args.wandb:
+        wandb_run = wandb.init(dir = './wandb_output/', project="fed_ssl", name=args.wandb_name+str(args.seed), config=config, settings=wandb.Settings(code_dir="."))
+        wandb.config.update(args)
+        
     model = get_model(args.model, args.encoder_network, args.predictor_network)
     easyfl.register_model(model)
     easyfl.register_client(FedSSLClient)
@@ -175,6 +187,8 @@ def run():
     easyfl.init(config, init_all=True)
     easyfl.run()
 
-
+    if args.wandb:
+        wandb_run.finish()
+        
 if __name__ == '__main__':
     run()
