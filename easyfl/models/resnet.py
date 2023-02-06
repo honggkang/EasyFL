@@ -97,6 +97,43 @@ class Bottleneck(nn.Module):
         return out
 
 
+class BottleneckM(nn.Module):
+    expansion = 4
+
+    def __init__(self, in_planes, planes, step_size, stride=1):
+        super(BottleneckM, self).__init__()
+        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
+                               stride=stride, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.conv3 = nn.Conv2d(planes, self.expansion *
+                               planes, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(self.expansion * planes)
+
+        if step_size:
+            self.step_size = nn.Parameter(torch.ones(1, requires_grad=True)*step_size/10)
+        else:
+            self.step_size = nn.Parameter(torch.ones(1, requires_grad=False)*step_size/10)
+            self.step_size.requires_grad = False
+                    
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion * planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion * planes,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(self.expansion * planes)
+            )
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = F.relu(self.bn2(self.conv2(out)))
+        out = self.step_size*self.bn3(self.conv3(out))
+        out += self.shortcut(x)
+        out = F.relu(out)
+        return out
+
+
 class ResNet(nn.Module):
     """ResNet
     Note two main differences from official pytorch version:
@@ -196,6 +233,10 @@ def ResNet34(num_classes=10):
 
 def ResNet50(num_classes=10):
     return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes)
+
+
+def ResNet50M(step_size_2d_list=[[1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1, 1, 1], [1, 1, 1]], model_rate=1, num_classes=10):
+    return ResNetM(BottleneckM, [3, 4, 6, 3], step_size_2d_list, model_rate=model_rate, num_classes=num_classes)
 
 
 def ResNet101(num_classes=10):

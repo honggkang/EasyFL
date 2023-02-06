@@ -26,8 +26,8 @@ def run():
     parser.add_argument("--data_partition", type=str, default='class', help='options: class, iid, dir')
     parser.add_argument("--dir_alpha", type=float, default=0.1, help='alpha for dirichlet sampling')
     parser.add_argument('--model', default='byol', type=str, help='options: byol, simsiam, simclr, moco, moco_v2')
-    parser.add_argument('--encoder_network', default='resnet18m', type=str,
-                        help='network architecture of encoder, options: resnet18, resnet50, resnet18m')
+    parser.add_argument('--encoder_network', default='resnet50', type=str,
+                        help='network architecture of encoder, options: resnet18, resnet50, resnet18m, resnet50m')
     parser.add_argument('--predictor_network', default='2_layer', type=str,
                         help='network of predictor, options: 1_layer, 2_layer')
 
