@@ -773,7 +773,8 @@ class BaseServer(object):
         self.print_('Test time {:.2f}s, Test loss: {:.2f}, Test accuracy: {:.2f}%'.format(
             results[metric.TEST_TIME], results[metric.TEST_LOSS], results[metric.TEST_ACCURACY]))
         if self.conf.wandb:
-            wandb.log({"Test_acc": results[metric.TEST_ACCURACY]})
+            wandb.log({ "Commun. round": self._current_round,
+                "Test_acc": results[metric.TEST_ACCURACY]})
 
     def save_tracker(self):
         """Save metrics in the tracker to database."""

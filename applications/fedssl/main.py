@@ -26,8 +26,8 @@ def run():
     parser.add_argument("--data_partition", type=str, default='class', help='options: class, iid, dir')
     parser.add_argument("--dir_alpha", type=float, default=0.1, help='alpha for dirichlet sampling')
     parser.add_argument('--model', default='byol', type=str, help='options: byol, simsiam, simclr, moco, moco_v2')
-    parser.add_argument('--encoder_network', default='resnet18', type=str,
-                        help='network architecture of encoder, options: resnet18, resnet50')
+    parser.add_argument('--encoder_network', default='resnet18m', type=str,
+                        help='network architecture of encoder, options: resnet18, resnet50, resnet18m')
     parser.add_argument('--predictor_network', default='2_layer', type=str,
                         help='network of predictor, options: 1_layer, 2_layer')
 
@@ -36,7 +36,7 @@ def run():
     parser.add_argument('--rounds', default=100, type=int)
     parser.add_argument('--num_of_clients', default=10, type=int) #####
     parser.add_argument('--clients_per_round', default=10, type=int) ######
-    parser.add_argument('--class_per_client', default=4, type=int,
+    parser.add_argument('--class_per_client', default=10, type=int,
                         help='for non-IID setting, number of classes each client, based on CIFAR10')
     parser.add_argument('--optimizer_type', default='SGD', type=str, help='optimizer type')
     parser.add_argument('--lr', default=0.032, type=float)
